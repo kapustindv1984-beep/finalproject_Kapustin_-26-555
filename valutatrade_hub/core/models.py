@@ -3,7 +3,7 @@
 import hashlib
 import secrets
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 
 def _hash_password(password: str, salt: str) -> str:
@@ -30,7 +30,7 @@ class User:
         self._registration_date = registration_date
 
     @classmethod
-    def create(cls, user_id: int, username: str, password: str) -> "User":
+    def create(cls, user_id: int, username: str, password: str) -> User:
         """Создаёт нового пользователя: генерирует соль и хеширует пароль."""
         if len(password) < 4:
             raise ValueError("Пароль от 4 символов")
@@ -100,7 +100,7 @@ class User:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "User":
+    def from_dict(cls, data: dict[str, Any]) -> User:
         """Восстанавливает пользователя из словаря users.json."""
         return cls(
             user_id=data["user_id"],
@@ -123,7 +123,7 @@ class Wallet:
     def _check_amount(amount: Any) -> None:
         """Проверяет, что сумма — положительное число."""
         if not isinstance(amount, (int, float)) or isinstance(amount, bool):
-            raise ValueError("Сумма должна быть числом")
+            raise TypeError("Сумма должна быть числом")
         if amount <= 0:
             raise ValueError("'amount' должен быть положительным числом")
 
@@ -138,7 +138,7 @@ class Wallet:
     def balance(self, value: float) -> None:
         """Запрещает отрицательные и некорректные значения баланса."""
         if not isinstance(value, (int, float)) or isinstance(value, bool):
-            raise ValueError("Баланс должен быть числом")
+            raise TypeError("Баланс должен быть числом")
         if value < 0:
             raise ValueError("Баланс не может быть отрицательным")
         self._balance = float(value)
@@ -170,7 +170,7 @@ class Wallet:
         return {"currency_code": self.currency_code, "balance": self._balance}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Wallet":
+    def from_dict(cls, data: dict[str, Any]) -> Wallet:
         """Восстанавливает кошелёк из словаря."""
         return cls(currency_code=data["currency_code"], balance=data["balance"])
 
@@ -178,7 +178,7 @@ class Wallet:
 class Portfolio:
     """Управляет всеми кошельками одного пользователя."""
 
-    def __init__(self, user_id: int, wallets: Optional[dict[str, Wallet]] = None) -> None:
+    def __init__(self, user_id: int, wallets: dict[str, Wallet] | None = None) -> None:
         """Создаёт портфель пользователя (пустой по умолчанию)."""
         self._user_id = user_id
         self._wallets: dict[str, Wallet] = wallets if wallets is not None else {}
@@ -231,7 +231,7 @@ class Portfolio:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Portfolio":
+    def from_dict(cls, data: dict[str, Any]) -> Portfolio:
         """Восстанавливает портфель из словаря portfolios.json."""
         wallets = {
             code: Wallet(currency_code=code, balance=w["balance"])
