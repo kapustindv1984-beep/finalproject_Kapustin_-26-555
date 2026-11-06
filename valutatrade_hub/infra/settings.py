@@ -3,7 +3,7 @@
 import json
 import threading
 from pathlib import Path
-from typing import Any
+from typing import Any, Self
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -29,10 +29,10 @@ class SettingsLoader:
     конкурентных вызовах из разных потоков.
     """
 
-    _instance: "SettingsLoader | None" = None
+    _instance: SettingsLoader | None = None
     _instance_lock = threading.Lock()
 
-    def __new__(cls) -> "SettingsLoader":
+    def __new__(cls) -> Self:
         if cls._instance is None:
             with cls._instance_lock:
                 if cls._instance is None:

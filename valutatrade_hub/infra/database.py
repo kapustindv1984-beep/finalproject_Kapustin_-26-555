@@ -3,8 +3,9 @@
 import json
 import os
 import threading
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Self
 
 from valutatrade_hub.infra.settings import PROJECT_ROOT, SettingsLoader
 
@@ -18,10 +19,10 @@ class DatabaseManager:
     Реализован через __new__: как и SettingsLoader, для единообразия.
     """
 
-    _instance: "DatabaseManager | None" = None
+    _instance: DatabaseManager | None = None
     _instance_lock = threading.Lock()
 
-    def __new__(cls) -> "DatabaseManager":
+    def __new__(cls) -> Self:
         if cls._instance is None:
             with cls._instance_lock:
                 if cls._instance is None:
