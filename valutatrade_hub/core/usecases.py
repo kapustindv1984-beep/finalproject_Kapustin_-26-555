@@ -8,9 +8,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from valutatrade_hub.core.currencies import get_currency
 from valutatrade_hub.core.exceptions import (
     ApiRequestError,
-    CurrencyNotFoundError,
     InsufficientFundsError,
 )
 from valutatrade_hub.core.models import Portfolio, User, Wallet
@@ -55,15 +55,6 @@ def _save_json(path: Path, data: Any) -> None:
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     os.replace(tmp, path)
-
-
-def _known_currencies() -> set[str]:
-    """Множество всех известных кодов валют (USD + стороны пар)."""
-    codes: set[str] = {"USD"}
-    for pair in STUB_RATES:
-        codes.update(pair.split("_"))
-    return codes
-
 
 def _find_user(username: str) -> User | None:
     """Ищет пользователя по имени в users.json."""
@@ -142,8 +133,7 @@ def show_portfolio(base: str = "USD") -> str:
     """Возвращает текстовое представление портфеля с итогом в base."""
     user = require_login()
     base = validate_currency_code(base)
-    if base not in _known_currencies():
-        raise CurrencyNotFoundError(base)
+    get_currency(base)
     portfolio = _get_portfolio(user.user_id)
     if not portfolio.wallets:
         return f"Портфель пользователя '{user.username}' пуст"
@@ -163,7 +153,12 @@ def show_portfolio(base: str = "USD") -> str:
                 continue
             value = wallet.balance * entry["rate"]
         total += value
-        lines.append(f"- {code}: {wallet.balance:.4f} → {value:,.2f} {base}")
+        currency_obj = get_currency(code)
+        lines.append(
+                f"- {code}: {currency_obj.formatting(wallet.balance)} "
+                f"→ {value:,.2f} {base}"
+            )
+
     lines.append("-" * 33)
     lines.append(f"ИТОГО: {total:,.2f} {base}")
     return "\n".join(lines)
@@ -173,11 +168,8 @@ def get_rate(from_code: str, to_code: str) -> tuple[float, str]:
     """Возвращает (курс, время обновления), при необходимости из заглушки."""
     from_code = validate_currency_code(from_code)
     to_code = validate_currency_code(to_code)
-    known = _known_currencies()
-    if from_code not in known:
-        raise CurrencyNotFoundError(from_code)
-    if to_code not in known:
-        raise CurrencyNotFoundError(to_code)
+    get_currency(from_code)  # бросит CurrencyNotFoundError, если валюта неизвестна
+    get_currency(to_code)
     if from_code == to_code:
         return 1.0, datetime.now().isoformat(timespec="seconds")
 
@@ -230,8 +222,7 @@ def buy_currency(currency: str, amount: float) -> str:
     user = require_login()
     currency = validate_currency_code(currency)
     amount = validate_amount(amount)
-    if currency not in _known_currencies():
-        raise CurrencyNotFoundError(currency)
+    get_currency(currency)
 
     portfolio = _get_portfolio(user.user_id)
     if currency == "USD":
@@ -276,8 +267,7 @@ def sell_currency(currency: str, amount: float) -> str:
     user = require_login()
     currency = validate_currency_code(currency)
     amount = validate_amount(amount)
-    if currency not in _known_currencies():
-        raise CurrencyNotFoundError(currency)
+    get_currency(currency)
 
     portfolio = _get_portfolio(user.user_id)
     wallet = portfolio.get_wallet(currency)
