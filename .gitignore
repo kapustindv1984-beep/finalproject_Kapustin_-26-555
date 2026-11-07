@@ -9,3 +9,7 @@ logs/
 .env
 .vscode/
 check_*.py
+data/users.json
+data/portfolios.json
+data/rates.json
+data/exchange_rates.json
