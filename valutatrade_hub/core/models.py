@@ -2,7 +2,7 @@
 
 import hashlib
 import secrets
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -40,7 +40,7 @@ class User:
             username=username,
             hashed_password=_hash_password(password, salt),
             salt=salt,
-            registration_date=datetime.now(),
+            registration_date=datetime.now(UTC),
         )
 
     # --- геттеры/сеттеры ---

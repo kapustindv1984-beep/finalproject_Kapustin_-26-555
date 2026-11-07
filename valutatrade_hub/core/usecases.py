@@ -2,7 +2,7 @@
 CLI не дублирует логику - только вызывает функции этого модуля.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from valutatrade_hub.core.currencies import get_currency
@@ -178,14 +178,16 @@ def get_rate(from_code: str, to_code: str) -> tuple[float, str]:
     get_currency(from_code)  # бросит CurrencyNotFoundError, если валюта неизвестна
     get_currency(to_code)
     if from_code == to_code:
-        return 1.0, datetime.now().isoformat(timespec="seconds")
+        return 1.0, datetime.now(UTC).isoformat(timespec="seconds")
 
     pair = f"{from_code}_{to_code}"
     entry = _db.read("rates_file", default={"pairs": {}}).get("pairs", {}).get(pair)
     ttl = _settings.get("rates_ttl_seconds", 300)
     if entry is not None:
         updated = datetime.fromisoformat(entry["updated_at"])
-        age = (datetime.now() - updated).total_seconds()
+        if updated.tzinfo is None:
+            updated = updated.replace(tzinfo=UTC)
+        age = (datetime.now(UTC) - updated).total_seconds()
         if age <= ttl:
             return float(entry["rate"]), entry["updated_at"]
 
@@ -199,7 +201,7 @@ def get_rate(from_code: str, to_code: str) -> tuple[float, str]:
         raise ApiRequestError(
             f"Курс {from_code}→{to_code} недоступен. Повторите попытку позже."
         )
-    updated_at = datetime.now().isoformat(timespec="seconds")
+    updated_at = datetime.now(UTC).isoformat(timespec="seconds")
     _cache_rate(pair, rate, updated_at)
     return rate, updated_at
 
