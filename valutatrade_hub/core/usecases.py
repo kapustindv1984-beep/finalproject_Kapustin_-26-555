@@ -55,12 +55,12 @@ def _get_portfolio(user_id: int) -> Portfolio:
 
 def _save_portfolio(portfolio: Portfolio) -> None:
     """Сохраняет портфель, заменяя запись того же user_id."""
+
     def _replace(portfolios: Any) -> list[dict[str, Any]]:
         portfolios = portfolios or []
-        return [
-            p for p in portfolios
-            if p["user_id"] != portfolio.user_id
-        ] + [portfolio.to_dict()]
+        return [p for p in portfolios if p["user_id"] != portfolio.user_id] + [
+            portfolio.to_dict()
+        ]
 
     _db.transaction("portfolios_file", _replace, default=[])
 
@@ -140,16 +140,14 @@ def show_portfolio(base: str = "USD") -> str:
             entry = pairs.get(f"{code}_{base}")
             if entry is None:
                 lines.append(
-                    f"- {code}: {wallet.balance:.4f} "
-                    f"→ курс {code}→{base} недоступен"
+                    f"- {code}: {wallet.balance:.4f} → курс {code}→{base} недоступен"
                 )
                 continue
             value = wallet.balance * entry["rate"]
         total += value
         currency_obj = get_currency(code)
         lines.append(
-            f"- {code}: {currency_obj.formatting(wallet.balance)} "
-            f"→ {value:,.2f} {base}"
+            f"- {code}: {currency_obj.formatting(wallet.balance)} → {value:,.2f} {base}"
         )
 
     lines.append("-" * 33)
@@ -159,6 +157,7 @@ def show_portfolio(base: str = "USD") -> str:
 
 def _cache_rate(pair: str, rate: float, updated_at: str) -> None:
     """Сохраняет курс в rates.json через безопасную транзакцию."""
+
     def _update(data: Any) -> dict[str, Any]:
         data = data or {"pairs": {}, "last_refresh": None}
         data.setdefault("pairs", {})[pair] = {

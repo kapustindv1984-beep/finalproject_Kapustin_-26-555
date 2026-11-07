@@ -42,7 +42,6 @@ class DatabaseManager:
         """Возвращает абсолютный путь к файлу хранилища по ключу настроек."""
         return PROJECT_ROOT / self._settings.get(key)
 
-
     def _file_lock(self, path: Path) -> threading.Lock:
         """Отдельный lock на каждый файл - разные файлы не блокируют друг друга."""
         with self._locks_guard:
@@ -70,7 +69,9 @@ class DatabaseManager:
             )
             os.replace(tmp, path)
 
-    def transaction(self, key: str, mutator: Callable[[Any], Any], default: Any = None) -> Any:
+    def transaction(
+        self, key: str, mutator: Callable[[Any], Any], default: Any = None
+    ) -> Any:
         """Безопасная операция: читает файл, применяет mutator, атомарно пишет.
 
         mutator получает текущее содержимое (или default) и возвращает

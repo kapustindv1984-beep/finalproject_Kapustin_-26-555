@@ -81,7 +81,7 @@ def main() -> None:
     while True:
         try:
             raw = input("> ").strip()
-        except (KeyboardInterrupt, EOFError):
+        except KeyboardInterrupt, EOFError:
             print("\nBye!")
             return
         if not raw:
@@ -101,6 +101,7 @@ def main() -> None:
         except (PermissionError, ValueError, TypeError) as e:
             print(f"Ошибка: {e}")
 
+
 def cmd_update_rates(args: dict) -> None:
     """Запускает обновление курсов из внешних API."""
     from valutatrade_hub.parser_service.updater import RatesUpdater
@@ -118,6 +119,7 @@ def cmd_update_rates(args: dict) -> None:
     if summary["errors"]:
         print("Но были ошибки по части источников:", "; ".join(summary["errors"]))
 
+
 def cmd_show_rates(args: dict) -> None:
     """Показывает курсы из локального кеша с фильтрацией."""
     from prettytable import PrettyTable
@@ -127,7 +129,9 @@ def cmd_show_rates(args: dict) -> None:
     cache = storage.read_cache()
     pairs = cache.get("pairs", {})
     if not pairs:
-        print("Локальный кеш курсов пуст. Выполните 'update-rates', чтобы загрузить данные.")
+        print(
+            "Локальный кеш курсов пуст. Выполните 'update-rates', чтобы загрузить данные."
+        )
         return
 
     currency = (args.get("currency") or "").upper()
@@ -145,7 +149,9 @@ def cmd_show_rates(args: dict) -> None:
             if base_usd is None:
                 print(f"Неизвестная базовая валюта '{base}'")
                 return
-            rows.append((f"{pair.split('_')[0]}_{base}", info["rate"] / base_usd["rate"]))
+            rows.append(
+                (f"{pair.split('_')[0]}_{base}", info["rate"] / base_usd["rate"])
+            )
         else:
             rows.append((pair, info["rate"]))
 
@@ -160,7 +166,7 @@ def cmd_show_rates(args: dict) -> None:
             (r for r in rows if r[0].split("_")[0] in crypto_codes),
             key=lambda r: r[1],
             reverse=True,
-        )[:int(top)]
+        )[: int(top)]
     else:
         rows.sort(key=lambda r: r[0])
 

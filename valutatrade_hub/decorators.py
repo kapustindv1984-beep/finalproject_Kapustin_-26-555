@@ -55,8 +55,10 @@ def log_action(action: str, verbose: bool = False) -> Callable:
             try:
                 result = func(*args, **kwargs)
             except Exception as exc:
-                parts.append(f"result=ERROR error_type={type(exc).__name__} "
-                             f"error_message={exc!s}")
+                parts.append(
+                    f"result=ERROR error_type={type(exc).__name__} "
+                    f"error_message={exc!s}"
+                )
                 logger.error(" ".join(parts))
                 raise
             parts.append("result=OK")

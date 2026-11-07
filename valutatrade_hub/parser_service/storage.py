@@ -4,15 +4,17 @@ rates.json - снимок последних курсов,  читает Core Se
 exchange_rates.json - история всех измерений для последующего анализа.
 Запись: сначала во временный файл, затем rename.
 """
+
 import json
-import os
 import logging
-from datetime import datetime, timezone
+import os
+from datetime import UTC, datetime
 from pathlib import Path
 
 from valutatrade_hub.parser_service.config import parser_config
 
 logger = logging.getLogger(__name__)
+
 
 def _atomic_write(path: Path, data: dict | list) -> None:
     """Атомарно записывает data в path: tmp-файл, затем os.replace."""
@@ -33,7 +35,7 @@ def read_cache() -> dict:
 
 def write_cache(rates: dict[str, float], sources: dict[str, str]) -> None:
     """Сохраняет объединённый срез курсов в rates.json."""
-    now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now_iso = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     data = {
         "pairs": {
             pair: {
@@ -69,21 +71,23 @@ def append_history(rates: dict[str, float], source: str, request_ms: int) -> Non
     id каждой записи строится как <FROM>_<TO>_<ISO-UTC>.
     """
     history = read_history()
-    now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now_iso = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     for pair, rate in rates.items():
         from_code, to_code = pair.split("_", 1)
-        history.append({
-            "id": f"{pair}_{now_iso}",
-            "from_currency": from_code,
-            "to_currency": to_code,
-            "rate": rate,
-            "timestamp": now_iso,
-            "source": source,
-            "meta": {
-                "raw_id": None,
-                "request_ms": request_ms,
-                "status_code": 200,
-                "etag": None,
-            },
-        })
+        history.append(
+            {
+                "id": f"{pair}_{now_iso}",
+                "from_currency": from_code,
+                "to_currency": to_code,
+                "rate": rate,
+                "timestamp": now_iso,
+                "source": source,
+                "meta": {
+                    "raw_id": None,
+                    "request_ms": request_ms,
+                    "status_code": 200,
+                    "etag": None,
+                },
+            }
+        )
     _atomic_write(Path(parser_config.HISTORY_FILE_PATH), history)

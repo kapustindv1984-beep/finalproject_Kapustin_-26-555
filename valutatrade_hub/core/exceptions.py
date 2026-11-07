@@ -1,5 +1,6 @@
 """Пользовательские исключения."""
 
+
 class ValutaTradeError(Exception):
     """Базовое исключение приложения."""
 
@@ -13,6 +14,7 @@ class InsufficientFundsError(ValutaTradeError):
             f"Недостаточно средств: доступно {available:.4f} {code}, "
             f"требуется {required:.4f} {code}"
         )
+
 
 class CurrencyNotFoundError(ValutaTradeError):
     def __init__(self, code: str) -> None:

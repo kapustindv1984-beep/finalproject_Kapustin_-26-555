@@ -11,9 +11,9 @@ _DATEFMT = "%Y-%m-%dT%H:%M:%S"
 
 def setup_logging() -> logging.Logger:
     """Создаёт и возвращает настроенный логгер проекта.
-    Уровень, путь и формат берутся из SettingsLoader. 
+    Уровень, путь и формат берутся из SettingsLoader.
     """
-    
+
     settings = SettingsLoader()
     logger = logging.getLogger("valutatrade_hub")
 
@@ -28,7 +28,7 @@ def setup_logging() -> logging.Logger:
     handler = RotatingFileHandler(
         log_path,
         maxBytes=100_000,  # ротация ~ каждые 100 КБ
-        backupCount=5,     # хранится до 5 старых файлов (actions.log.1 и т.д.)
+        backupCount=5,  # хранится до 5 старых файлов (actions.log.1 и т.д.)
         encoding="utf-8",
     )
     handler.setFormatter(logging.Formatter(_FORMAT, datefmt=_DATEFMT))

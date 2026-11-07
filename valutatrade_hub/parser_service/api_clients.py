@@ -4,6 +4,7 @@
 к единому формату: {"BTC_USD": 59337.21, ...}.
 Ошибки сети и API оборачиваются в ApiRequestError.
 """
+
 from abc import ABC, abstractmethod
 
 import requests
@@ -65,9 +66,12 @@ class CoinGeckoClient(BaseApiClient):
         """Запрашивает курсы криптовалют и приводит их к формату пар."""
         vs = parser_config.BASE_FIAT_CURRENCY.lower()
         ids = ",".join(
-            parser_config.CRYPTO_ID_MAP[code] for code in parser_config.CRYPTO_CURRENCIES
+            parser_config.CRYPTO_ID_MAP[code]
+            for code in parser_config.CRYPTO_CURRENCIES
         )
-        data = _request_json(parser_config.COINGECKO_URL, {"ids": ids, "vs_currencies": vs})
+        data = _request_json(
+            parser_config.COINGECKO_URL, {"ids": ids, "vs_currencies": vs}
+        )
 
         rates: dict[str, float] = {}
         for code in parser_config.CRYPTO_CURRENCIES:

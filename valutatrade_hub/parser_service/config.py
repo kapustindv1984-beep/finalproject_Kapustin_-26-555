@@ -4,6 +4,7 @@ API-ключ хранится в переменной окружения EXCHANG
 (файл .env в корне проекта, не отслеживается git-ом) — по требованию
 безопасности ключ не держим в коде.
 """
+
 import os
 from dataclasses import dataclass, field
 
@@ -20,7 +21,9 @@ class ParserConfig:
     """Все изменяемые параметры Parser Service в одном месте."""
 
     # Ключ загружается из переменной окружения
-    EXCHANGERATE_API_KEY: str = field(default_factory=lambda: os.getenv("EXCHANGERATE_API_KEY", ""))
+    EXCHANGERATE_API_KEY: str = field(
+        default_factory=lambda: os.getenv("EXCHANGERATE_API_KEY", "")
+    )
 
     # Эндпоинты
     COINGECKO_URL: str = "https://api.coingecko.com/api/v3/simple/price"
@@ -30,11 +33,13 @@ class ParserConfig:
     BASE_FIAT_CURRENCY: str = "USD"
     FIAT_CURRENCIES: tuple = ("EUR", "GBP", "RUB")
     CRYPTO_CURRENCIES: tuple = ("BTC", "ETH", "SOL")
-    CRYPTO_ID_MAP: dict = field(default_factory=lambda: {
-        "BTC": "bitcoin",
-        "ETH": "ethereum",
-        "SOL": "solana",
-    })
+    CRYPTO_ID_MAP: dict = field(
+        default_factory=lambda: {
+            "BTC": "bitcoin",
+            "ETH": "ethereum",
+            "SOL": "solana",
+        }
+    )
 
     # Пути к файлам хранилища
     RATES_FILE_PATH: str = str(PROJECT_ROOT / "data" / "rates.json")

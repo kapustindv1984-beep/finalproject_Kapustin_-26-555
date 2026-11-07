@@ -3,6 +3,7 @@
 Если один из клиентов падает - ошибка логируется, обновление
 продолжается с данными остальных.
 """
+
 import logging
 import time
 
@@ -21,10 +22,14 @@ class RatesUpdater:
     """Точка входа Parser Service: опрашивает клиентов и обновляет кеш."""
 
     def __init__(self, clients: list[BaseApiClient] | None = None):
-        self._clients = clients if clients is not None else [
-            CoinGeckoClient(),
-            ExchangeRateApiClient(),
-        ]
+        self._clients = (
+            clients
+            if clients is not None
+            else [
+                CoinGeckoClient(),
+                ExchangeRateApiClient(),
+            ]
+        )
 
     def run_update(self, source: str | None = None) -> dict:
         """Опрашивает клиентов, объединяет курсы и сохраняет их.

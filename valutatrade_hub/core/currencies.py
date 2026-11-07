@@ -40,6 +40,7 @@ class Currency(ABC):
     def formatting(self, amount: float) -> str:
         """Возвращает сумму в формате, специфичном для типа валюты."""
 
+
 class FiatCurrency(Currency):
     """Фиатная валюта: сумма выводится с двумя знаками после запятой."""
 
@@ -50,6 +51,7 @@ class FiatCurrency(Currency):
             return f"{formatted} {self._symbol}"
         return f"{formatted} {self._code}"
 
+
 class CryptoCurrency(Currency):
     """Криптовалюта: сумма выводится с восемью знаками после запятой."""
 
@@ -59,6 +61,7 @@ class CryptoCurrency(Currency):
         if self._symbol:
             return f"{formatted} {self._symbol}"
         return f"{formatted} {self._code}"
+
 
 # Реестр валют
 
@@ -87,17 +90,20 @@ def _build_registry() -> None:
     for code, (name, symbol) in _CRYPTO_CODES.items():
         _registry[code] = CryptoCurrency(code, name, symbol)
 
+
 def get_currency(code: str) -> Currency:
     """Возвращает объект валюты по коду.
     CurrencyNotFoundError, если валюта неизвестна.
     """
     _build_registry()
     from valutatrade_hub.core.exceptions import CurrencyNotFoundError
+
     normalized = code.strip().upper()
     currency = _registry.get(normalized)
     if currency is None:
         raise CurrencyNotFoundError(code)
     return currency
+
 
 def list_known_currencies() -> set[str]:
     """Множество всех известных кодов валют."""

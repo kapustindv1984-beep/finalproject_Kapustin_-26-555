@@ -143,7 +143,6 @@ class Wallet:
             raise ValueError("Баланс не может быть отрицательным")
         self._balance = float(value)
 
-
     def deposit(self, amount: float) -> None:
         """Пополняет баланс на положительную сумму."""
         self._check_amount(amount)
@@ -208,7 +207,9 @@ class Portfolio:
         """Возвращает кошелёк по коду валюты или None, если его нет."""
         return self._wallets.get(currency_code.strip().upper())
 
-    def get_total_value(self, rates: dict[str, float], base_currency: str = "USD") -> float:
+    def get_total_value(
+        self, rates: dict[str, float], base_currency: str = "USD"
+    ) -> float:
         """Считает общую стоимость всех валют"""
         total = 0.0
         for code, wallet in self._wallets.items():
