@@ -10,12 +10,15 @@ from valutatrade_hub.core.exceptions import (
 )
 
 HELP_TEXT = """Доступные команды:
-  register --username NAME --password PASS  регистрация
-  login --username NAME --password PASS     вход
-  show-portfolio [--base CUR]               портфель и итог в базовой валюте
-  buy --currency CUR --amount N             купить валюту за USD
-  sell --currency CUR --amount N            продать валюту
-  get-rate --from CUR1 --to CUR2            курс валютной пары
+  register --username NAME --password PASS              регистрация
+  login --username NAME --password PASS                 вход
+  show-portfolio [--base CUR]                           портфель и итог в базовой валюте
+  buy --currency CUR --amount N                         купить валюту за USD
+  sell --currency CUR --amount N                        продать валюту
+  get-rate --from CUR1 --to CUR2                        курс валютной пары
+  update-rates [--source coingecko|exchangerate]        обновить курсы из API
+  show-rates [--currency CUR] [--top N] [--base CUR]    курсы из кеша таблицей
+
   help                                      этот список
   exit                                      выход"""
 
@@ -63,6 +66,12 @@ def _dispatch(command: str, args: list[str]) -> None:
     elif command == "get-rate":
         v = _parse_args(args, ("from", "to"))
         print(usecases.get_rate_message(v["from"], v["to"]))
+    elif command == "update-rates":
+        v = _parse_args(args, ())
+        cmd_update_rates(v)
+    elif command == "show-rates":
+        v = _parse_args(args, ())
+        cmd_show_rates(v)
     else:
         print(f"Неизвестная команда: '{command}'. Введите 'help'")
 
@@ -91,3 +100,74 @@ def main() -> None:
             print("Поддерживаемые коды: USD, EUR, GBP, RUB, BTC, ETH, SOL")
         except (PermissionError, ValueError, TypeError) as e:
             print(f"Ошибка: {e}")
+
+def cmd_update_rates(args: dict) -> None:
+    """Запускает обновление курсов из внешних API."""
+    from valutatrade_hub.parser_service.updater import RatesUpdater
+
+    updater = RatesUpdater()
+    summary = updater.run_update(source=args.get("source"))
+
+    if summary["updated"] == 0:
+        print("Update completed with errors. Check logs/parser.log for details.")
+        return
+    print(
+        f"Update successful. Total rates updated: {summary['updated']}. "
+        f"Last refresh: {summary['last_refresh']}"
+    )
+    if summary["errors"]:
+        print("Но были ошибки по части источников:", "; ".join(summary["errors"]))
+
+def cmd_show_rates(args: dict) -> None:
+    """Показывает курсы из локального кеша с фильтрацией."""
+    from prettytable import PrettyTable
+
+    from valutatrade_hub.parser_service import storage
+
+    cache = storage.read_cache()
+    pairs = cache.get("pairs", {})
+    if not pairs:
+        print("Локальный кеш курсов пуст. Выполните 'update-rates', чтобы загрузить данные.")
+        return
+
+    currency = (args.get("currency") or "").upper()
+    base = (args.get("base") or "USD").upper()
+    top = args.get("top")
+
+    rows: list[tuple[str, float]] = []
+    for pair, info in pairs.items():
+        if currency and not pair.startswith(currency + "_"):
+            continue
+        if base != "USD":
+            # Пересчёт в произвольную базу через USD:
+            # rate(A_EUR) = rate(A_USD) / rate(EUR_USD)
+            base_usd = pairs.get(f"{base}_USD")
+            if base_usd is None:
+                print(f"Неизвестная базовая валюта '{base}'")
+                return
+            rows.append((f"{pair.split('_')[0]}_{base}", info["rate"] / base_usd["rate"]))
+        else:
+            rows.append((pair, info["rate"]))
+
+    if not rows:
+        print(f"Курс для '{currency}' не найден в кеше.")
+        return
+
+    if top is not None:
+        crypto_codes = ("BTC", "ETH", "SOL")
+
+        rows = sorted(
+            (r for r in rows if r[0].split("_")[0] in crypto_codes),
+            key=lambda r: r[1],
+            reverse=True,
+        )[:int(top)]
+    else:
+        rows.sort(key=lambda r: r[0])
+
+    updated = cache.get("last_refresh") or "?"
+    print(f"Rates from cache (updated at {updated}):")
+    table = PrettyTable()
+    table.field_names = ["Pair", "Rate"]
+    for pair, rate in rows:
+        table.add_row([pair, f"{rate:.6f}"])
+    print(table)
