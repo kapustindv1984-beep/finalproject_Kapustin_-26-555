@@ -19,8 +19,8 @@ HELP_TEXT = """Доступные команды:
   update-rates [--source coingecko|exchangerate]        обновить курсы из API
   show-rates [--currency CUR] [--top N] [--base CUR]    курсы из кеша таблицей
 
-  help                                      этот список
-  exit                                      выход"""
+  help                                                  этот список
+  exit                                                  выход"""
 
 
 def _parse_args(args: list[str], required: tuple[str, ...]) -> dict[str, str]:
