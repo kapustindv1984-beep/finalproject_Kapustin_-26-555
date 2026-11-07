@@ -130,20 +130,20 @@ def show_portfolio(base: str = "USD") -> str:
     portfolio = _get_portfolio(user.user_id)
     if not portfolio.wallets:
         return f"Портфель пользователя '{user.username}' пуст"
-    pairs = _db.read("rates_file", default={"pairs": {}}).get("pairs", {})
     lines = [f"Портфель пользователя '{user.username}' (база: {base}):"]
     total = 0.0
     for code, wallet in sorted(portfolio.wallets.items()):
         if code == base:
             value = wallet.balance
         else:
-            entry = pairs.get(f"{code}_{base}")
-            if entry is None:
+            try:
+                rate, _ = get_rate(code, base)
+            except ApiRequestError:
                 lines.append(
                     f"- {code}: {wallet.balance:.4f} → курс {code}→{base} недоступен"
                 )
                 continue
-            value = wallet.balance * entry["rate"]
+            value = wallet.balance * rate
         total += value
         currency_obj = get_currency(code)
         lines.append(
@@ -197,10 +197,18 @@ def get_rate(from_code: str, to_code: str) -> tuple[float, str]:
         rate = STUB_RATES[pair]
     elif reverse in STUB_RATES:
         rate = 1.0 / STUB_RATES[reverse]
+    elif from_code != "USD" and to_code != "USD":
+        try:
+            rate = STUB_RATES[f"{from_code}_USD"] / STUB_RATES[f"{to_code}_USD"]
+        except KeyError as e:
+            raise ApiRequestError(
+                f"Курс {from_code}→{to_code} недоступен. Повторите попытку позже."
+            ) from e
     else:
         raise ApiRequestError(
             f"Курс {from_code}→{to_code} недоступен. Повторите попытку позже."
         )
+
     updated_at = datetime.now(UTC).isoformat(timespec="seconds")
     _cache_rate(pair, rate, updated_at)
     return rate, updated_at
